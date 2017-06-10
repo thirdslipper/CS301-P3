@@ -194,7 +194,7 @@ public class Interpolation {
 				else
 					sb.append("+" + num2 + ")");
 				System.out.print(sb);
-				
+
 				if ((i+1) < size) {	//prepare next segment print
 					if (coeffs[i+1] > 0) {
 						System.out.print(" + ");
@@ -248,11 +248,14 @@ public class Interpolation {
 			subtotal = Math.rint((subtotal * 1000))/1000;
 			polynomials.add(0, subtotal);	//insert coefficient to beginning to arraylist, 
 			eq[i].insert(0, subtotal);
-			if (i < size-1 ){
-				eq[i].append(" + ");
+			if (i != 0){
+				if (subtotal > 0)
+					eq[i].insert(0, " + ");
+				else
+					eq[i].insert(0,  " ");
 			}
 			System.out.print(eq[i]);	//prints out polynomial segment unfactored
-			
+
 			segmentPoly = simplify(polynomials);	//Combines one polynomial segment
 			for (int k = 0; k < segmentPoly.size(); ++k){
 				if (condensed.size() < segmentPoly.size()){
@@ -330,7 +333,7 @@ public class Interpolation {
 	 * @param dependent - input y
 	 * @param size - actual size of array
 	 */
-/*	public static void lagrangeExpanded(double[] independent, double[] dependent, int size){
+	/*	public static void lagrangeExpanded(double[] independent, double[] dependent, int size){
 		String[] eq = new String[size];
 
 		for (int i = 0; i < size; ++i){	//for ea sub equation
