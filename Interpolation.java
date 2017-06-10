@@ -163,11 +163,18 @@ public class Interpolation {
 	public static void equationPrint(double[] coeffs, double[] independent, int size) {
 		System.out.println("Newton Equation");
 		StringBuilder sb = new StringBuilder();
-		double num = 0, num2 = 0;
-		for (int i = 0; i < coeffs.length; i++) {
-			System.out.print(Math.rint((coeffs[i] * 1000))/1000);
+		ArrayList<Double> polynomials = new ArrayList<Double>();
+		ArrayList<Double> segmentPoly = new ArrayList<Double>();
+		ArrayList<Double> condensed = new ArrayList<Double>();
 
-			if (i == 0) {	//print first value
+		double num = 0, num2 = 0, num3;
+		polynomials.add(0.0);
+		for (int i = 0; i < coeffs.length; i++) {
+			num3 = Math.rint((coeffs[i] * 1000))/1000;
+			System.out.print(num3);	//coeff
+			polynomials.set(0, num3);	
+
+			if (i == 0) {
 				if (Math.signum(coeffs[i+1]) == 1)
 					System.out.print(" + ");
 				else
@@ -177,24 +184,39 @@ public class Interpolation {
 				sb.append("(x");
 
 				num = (independent[i-1]);
-				num2 = (Math.abs(independent[i - 1]));
+				polynomials.add(-num);
+				num2 = (Math.abs(independent[i-1]));
 
-				if (independent[i - 1] == 0)
+				if (independent[i-1] == 0)
 					sb.append(")"); 
-				else if (independent[i - 1] > 0) 
+				else if (independent[i-1] > 0) 
 					sb.append("-" + num + ")");
 				else
 					sb.append("+" + num2 + ")");
 				System.out.print(sb);
 				if ((i+1) < size) {
-					if (coeffs[i+1] > 0) 
+					if (coeffs[i+1] > 0) {
 						System.out.print(" + ");
-					else
+					}
+					else{
 						System.out.print(" ");
+					}
 				}
 			}
+			segmentPoly = simplify(polynomials);
+			System.out.println();
+			for (Double temp: segmentPoly){
+				System.out.println("segment: " + temp);
+			}
+			for (int k = 0; k < segmentPoly.size(); ++k){
+				if (condensed.size() < segmentPoly.size()){
+					condensed.add(0.0);
+				}
+				condensed.set(k, condensed.get(k) + segmentPoly.get(k));
+			}
 		}
-		System.out.println("\n");
+		condensed(condensed);
+		System.out.println();
 	}
 	/**
 	 * Prints out the simplified version of langrange's form
@@ -203,14 +225,14 @@ public class Interpolation {
 	 * @param size - actual size of the array
 	 */
 	public static void lagrange(double[] independent, double[] dependent, int size){
-		System.out.println("Lagrange");
+		System.out.println("\nLagrange");
 		StringBuilder[] eq = new StringBuilder[size];
 		double subtotal;
 		ArrayList<Double> polynomials = new ArrayList<Double>();
 		ArrayList<Double> segmentPoly = new ArrayList<Double>();
 		ArrayList<Double> condensed = new ArrayList<Double>();
 
-		for (int i = 0; i < 2; ++i){	//for ea sub equation SIZE
+		for (int i = 0; i < size; ++i){	//for ea sub equation SIZE
 			subtotal = 1;
 			eq[i] = new StringBuilder();
 			for (int j = 0; j < size; ++j){
@@ -232,50 +254,63 @@ public class Interpolation {
 			if (i < size-1 ){
 				eq[i].append(" + ");
 			}
-			System.out.println(eq[i]);//print
+			System.out.print(eq[i]);
 			segmentPoly = simplify(polynomials);
-			/*			for (Double temp: segmentPoly)
-				System.out.println("segmentPoly: " + temp);*/
-			for (int l = 0; l < segmentPoly.size(); ++l){
+			for (int k = 0; k < segmentPoly.size(); ++k){
 				if (condensed.size() < segmentPoly.size()){
-					System.out.println("size++");
 					condensed.add(0.0);
 				}
-				condensed.set(l, condensed.get(l) + segmentPoly.get(l));
-				/*				System.out.println("segment: " + segmentPoly.get(l));
-				System.out.println("condensed: " + condensed.get(l));*/
+				condensed.set(k, condensed.get(k) + segmentPoly.get(k));
 			}
 			polynomials.clear();
 		}
-		for (Double temp: condensed)
-			System.out.println("condensed: " + temp);
-		System.out.println("\n");
+		condensed(condensed);
+		System.out.println();
+	}
+	public static void condensed(ArrayList<Double> condensed){
+		System.out.println("\nCondensed");
+
+		for (int l = 0; l < condensed.size(); ++l){
+			if (condensed.get(l) != 0){
+				System.out.print(Math.rint(condensed.get(l)*1000)/1000);
+
+				if (l == 1){
+					System.out.print("x");
+				}
+				else if (l > 1){
+					System.out.print("x^" + l);
+				}
+			}
+			if ((l+1) <condensed.size()){
+				if (condensed.get(l+1) > 0){
+					System.out.print(" + ");
+				}
+				else if (condensed.get(l+1) < 0){
+					System.out.print(" - ");
+					condensed.set(l+1, -condensed.get(l+1));
+				}
+			}
+		}
 	}
 	public static ArrayList<Double> simplify(ArrayList<Double> polynomials){
-		/*		for (int l = 0; l < polynomials.size(); ++l){
-			System.out.println("param: " + polynomials.get(l));
-		}*/
 		ArrayList<Double> simplified = new ArrayList<Double>();
-		simplified.add(polynomials.get(1));
-		simplified.add(1.0);
-		//	double temp2 = 0;
-
-		for (int i = 2; i < polynomials.size(); ++i){
-			simplified.add(0, 0.0);	//shift
-			/*			for (Double temp: simplified){
-				System.out.println(i + " curr list: " + temp);
-			}*/
-			for (int j = 1; j < simplified.size(); ++j){
-				//				System.out.println((j-1) + "Multiplying values: " + polynomials.get(i) + " * " +  simplified.get(j) + " + " + simplified.get(j-1));
-				//temp2 = (polynomials.get(i) * simplified.get(j)) + simplified.get(j-1);
-				simplified.set(j-1, (polynomials.get(i) * simplified.get(j)) + simplified.get(j-1));
+		if (polynomials.size() > 1){
+			simplified.add(polynomials.get(1));
+			simplified.add(1.0);
+			if (polynomials.size() > 2){
+				for (int i = 2; i < polynomials.size(); ++i){
+					simplified.add(0, 0.0);	//shift
+					for (int j = 1; j < simplified.size(); ++j){
+						simplified.set(j-1, (polynomials.get(i) * simplified.get(j)) + simplified.get(j-1));
+					}
+				}
 			}
-			/*			for (Double temp: simplified){
-				System.out.println("after mod: " + temp);
-			}*/
+			for (int k = 0; k < simplified.size(); ++k){
+				simplified.set(k, polynomials.get(0)*simplified.get(k));
+			}
 		}
-		for (int k = 0; k < simplified.size(); ++k){
-			simplified.set(k, polynomials.get(0)*simplified.get(k));
+		else{
+			return polynomials;
 		}
 		return simplified;
 	}
@@ -318,28 +353,5 @@ public class Interpolation {
 			System.out.print(eq[i]);
 		}
 		System.out.println();
-	}
-
-	//takes in an arraylist<double>
-	public class Polynomial{
-		ArrayList<Double> polynomials;
-		public Polynomial(ArrayList<Double> polynomials){
-			this.polynomials = polynomials;
-		}
-		//where [0] is coeff, [1-(size-1)] are polynomials all of first power and x-1
-		public void evaluate(){
-			ArrayList<Double> simplified = new ArrayList<Double>();
-			simplified.add(1.0);
-			simplified.add(polynomials.get(1));
-			for (int i = 2; i < polynomials.size(); ++i){
-				simplified.add(0, 0.0);	//shift
-				for (int j = 0; j < simplified.size(); ++j){
-					simplified.set(j, simplified.get(1) * polynomials.get(i)); 
-				}
-			}
-			for (int k = 0; k < simplified.size(); ++k){
-				System.out.println(simplified.get(k));
-			}
-		}
 	}
 }
