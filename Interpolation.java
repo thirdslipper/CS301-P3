@@ -155,7 +155,7 @@ public class Interpolation {
 		return eqCoeffs;
 	}
 	/**
-	 * Prints out a string representation of newton's form.
+	 * Prints out a string representation of newton's form and the simplified polynomial form.
 	 * @param coeffs - Leading coefficients to be used
 	 * @param independent - given x values
 	 * @param size - actual size of the array
@@ -163,28 +163,28 @@ public class Interpolation {
 	public static void equationPrint(double[] coeffs, double[] independent, int size) {
 		System.out.println("Newton Equation");
 		StringBuilder sb = new StringBuilder();
-		ArrayList<Double> polynomials = new ArrayList<Double>();
-		ArrayList<Double> segmentPoly = new ArrayList<Double>();
-		ArrayList<Double> condensed = new ArrayList<Double>();
+		ArrayList<Double> polynomials = new ArrayList<Double>();	//hold the x "(- num)" and the coefficients, first value represents coefficient
+		ArrayList<Double> segmentPoly = new ArrayList<Double>();	//holds the per segment simplification of polynomials
+		ArrayList<Double> condensed = new ArrayList<Double>();		//holds the final combination of like terms of the polynomials
 
 		double num = 0, num2 = 0, num3;
 		polynomials.add(0.0);
 		for (int i = 0; i < coeffs.length; i++) {
 			num3 = Math.rint((coeffs[i] * 1000))/1000;
-			System.out.print(num3);	//coeff
-			polynomials.set(0, num3);	
+			System.out.print(num3);	//coeff of each segment
+			polynomials.set(0, num3);	//index = 0 is always the coefficient
 
-			if (i == 0) {
+			if (i == 0) {	//print signs
 				if (Math.signum(coeffs[i+1]) == 1)
 					System.out.print(" + ");
 				else
 					System.out.print(" - ");
-			}
-			if (i > 0) {
+			}		
+			if (i > 0) {	//print signs and polynomials
 				sb.append("(x");
 
 				num = (independent[i-1]);
-				polynomials.add(-num);
+				polynomials.add(-num);	//add "x-num" equivalent to polynomials arraylist
 				num2 = (Math.abs(independent[i-1]));
 
 				if (independent[i-1] == 0)
@@ -194,7 +194,8 @@ public class Interpolation {
 				else
 					sb.append("+" + num2 + ")");
 				System.out.print(sb);
-				if ((i+1) < size) {
+				
+				if ((i+1) < size) {	//prepare next segment print
 					if (coeffs[i+1] > 0) {
 						System.out.print(" + ");
 					}
@@ -203,19 +204,15 @@ public class Interpolation {
 					}
 				}
 			}
-			segmentPoly = simplify(polynomials);
-			System.out.println();
-			for (Double temp: segmentPoly){
-				System.out.println("segment: " + temp);
-			}
-			for (int k = 0; k < segmentPoly.size(); ++k){
+			segmentPoly = simplify(polynomials);	//Combines one polynomial segment
+			for (int k = 0; k < segmentPoly.size(); ++k){	
 				if (condensed.size() < segmentPoly.size()){
 					condensed.add(0.0);
 				}
-				condensed.set(k, condensed.get(k) + segmentPoly.get(k));
+				condensed.set(k, condensed.get(k) + segmentPoly.get(k));	//combine like terms
 			}
 		}
-		condensed(condensed);
+		printCondensed(condensed);
 		System.out.println();
 	}
 	/**
@@ -228,14 +225,14 @@ public class Interpolation {
 		System.out.println("\nLagrange");
 		StringBuilder[] eq = new StringBuilder[size];
 		double subtotal;
-		ArrayList<Double> polynomials = new ArrayList<Double>();
-		ArrayList<Double> segmentPoly = new ArrayList<Double>();
-		ArrayList<Double> condensed = new ArrayList<Double>();
+		ArrayList<Double> polynomials = new ArrayList<Double>();	//hold the x "(- num)" and the coefficients, first value represents coefficient
+		ArrayList<Double> segmentPoly = new ArrayList<Double>();	//holds the per segment simplification of polynomials
+		ArrayList<Double> condensed = new ArrayList<Double>();		//holds the final combination of like terms of the polynomials
 
-		for (int i = 0; i < size; ++i){	//for ea sub equation SIZE
+		for (int i = 0; i < size; ++i){	//for ea segment equation
 			subtotal = 1;
 			eq[i] = new StringBuilder();
-			for (int j = 0; j < size; ++j){
+			for (int j = 0; j < size; ++j){	//print variables and signs
 				if (j != i){
 					if (independent[j] != 0){
 						eq[i].append("(x-" +  independent[j] + ")");
@@ -243,55 +240,39 @@ public class Interpolation {
 					else{
 						eq[i].append("(x)");
 					}
-					polynomials.add(-independent[j]);
-					subtotal *= (independent[i]-independent[j]);
+					polynomials.add(-independent[j]);	//add polynomial to arraylist
+					subtotal *= (independent[i]-independent[j]);	//subtotal for the denominator
 				}
 			}
-			subtotal = dependent[i]/subtotal;
+			subtotal = dependent[i]/subtotal;	//get coefficient
 			subtotal = Math.rint((subtotal * 1000))/1000;
-			polynomials.add(0, subtotal);
+			polynomials.add(0, subtotal);	//insert coefficient to beginning to arraylist, 
 			eq[i].insert(0, subtotal);
 			if (i < size-1 ){
 				eq[i].append(" + ");
 			}
-			System.out.print(eq[i]);
-			segmentPoly = simplify(polynomials);
+			System.out.print(eq[i]);	//prints out polynomial segment unfactored
+			
+			segmentPoly = simplify(polynomials);	//Combines one polynomial segment
 			for (int k = 0; k < segmentPoly.size(); ++k){
 				if (condensed.size() < segmentPoly.size()){
 					condensed.add(0.0);
 				}
-				condensed.set(k, condensed.get(k) + segmentPoly.get(k));
+				condensed.set(k, condensed.get(k) + segmentPoly.get(k)); //combine like terms
 			}
-			polynomials.clear();
+			polynomials.clear();	//reset polynomials to store
 		}
-		condensed(condensed);
+		printCondensed(condensed);
 		System.out.println();
 	}
-	public static void condensed(ArrayList<Double> condensed){
-		System.out.println("\nCondensed");
-
-		for (int l = 0; l < condensed.size(); ++l){
-			if (condensed.get(l) != 0){
-				System.out.print(Math.rint(condensed.get(l)*1000)/1000);
-
-				if (l == 1){
-					System.out.print("x");
-				}
-				else if (l > 1){
-					System.out.print("x^" + l);
-				}
-			}
-			if ((l+1) <condensed.size()){
-				if (condensed.get(l+1) > 0){
-					System.out.print(" + ");
-				}
-				else if (condensed.get(l+1) < 0){
-					System.out.print(" - ");
-					condensed.set(l+1, -condensed.get(l+1));
-				}
-			}
-		}
-	}
+	/**
+	 * Combines polynomials expressions and factors them per segment.
+	 * The index of the ArrayList represents the polynomial power.
+	 * ex: index = 0 would be x^0, index = 1 would be x^1, etc.
+	 * @param polynomials - ArrayList of coefficients in the first index, and polynomials in 
+	 * the form (x-n) in the rest.
+	 * @return simplified segment of the input ArrayList
+	 */
 	public static ArrayList<Double> simplify(ArrayList<Double> polynomials){
 		ArrayList<Double> simplified = new ArrayList<Double>();
 		if (polynomials.size() > 1){
@@ -299,7 +280,7 @@ public class Interpolation {
 			simplified.add(1.0);
 			if (polynomials.size() > 2){
 				for (int i = 2; i < polynomials.size(); ++i){
-					simplified.add(0, 0.0);	//shift
+					simplified.add(0, 0.0);	//shift right
 					for (int j = 1; j < simplified.size(); ++j){
 						simplified.set(j-1, (polynomials.get(i) * simplified.get(j)) + simplified.get(j-1));
 					}
@@ -315,12 +296,41 @@ public class Interpolation {
 		return simplified;
 	}
 	/**
+	 * Prints the input simplified ArrayList.
+	 * @param condensed - Fulled factored polynomial expression following the format of {@link simplify}.
+	 */
+	public static void printCondensed(ArrayList<Double> condensed){
+		System.out.println("\nCondensed");
+
+		for (int l = 0; l < condensed.size(); ++l){
+			if (condensed.get(l) != 0){
+				System.out.print(Math.rint(condensed.get(l)*1000)/1000);
+
+				if (l == 1){	//print polynomial and power
+					System.out.print("x");
+				}
+				else if (l > 1){
+					System.out.print("x^" + l);
+				}
+			}
+			if ((l+1) <condensed.size()){	//set up for next segment
+				if (condensed.get(l+1) > 0){
+					System.out.print(" + ");
+				}
+				else if (condensed.get(l+1) < 0){
+					System.out.print(" - ");
+					condensed.set(l+1, -condensed.get(l+1));
+				}
+			}
+		}
+	}
+	/**
 	 * Same formulation as {@link lagrange} but prints out numerical calculations rather than solving.
 	 * @param independent - input x
 	 * @param dependent - input y
 	 * @param size - actual size of array
 	 */
-	public static void lagrangeExpanded(double[] independent, double[] dependent, int size){
+/*	public static void lagrangeExpanded(double[] independent, double[] dependent, int size){
 		String[] eq = new String[size];
 
 		for (int i = 0; i < size; ++i){	//for ea sub equation
@@ -353,5 +363,5 @@ public class Interpolation {
 			System.out.print(eq[i]);
 		}
 		System.out.println();
-	}
+	}*/
 }
