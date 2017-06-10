@@ -19,10 +19,10 @@ public class Interpolation {
 		double[] independent = new double[50];
 		double temp = 0.0;
 		double[] dependent = new double[50];
-		System.out.println("Enter filename ex(ex, test.txt): ");
+//		System.out.println("Enter filename ex(ex, test.txt): ");
 		try {
-			filename = kb.nextLine();
-			File file = new File(filename);
+//			filename = kb.nextLine();
+			File file = new File("input.txt");
 			Scanner inputFile = new Scanner(file);   // opens file of user input
 
 			while (inputFile.hasNext()) {
@@ -64,6 +64,7 @@ public class Interpolation {
 			coef = tablePrint(independent, dependent, size, fxsize);
 			equationPrint(coef, independent, size);
 			lagrange(independent, y, size);
+//			lagrangeExpanded(independent, y, size);
 
 			kb.close();
 			inputFile.close();
@@ -147,7 +148,7 @@ public class Interpolation {
 			System.out.println("");
 		}
 		System.out.println("");
-		/*		for (int z = 0; z < eqCoeffs.length; ++z){
+		/*for (int z = 0; z < eqCoeffs.length; ++z){
 			System.out.println(eqCoeffs[z]);
 		}*/
 		return eqCoeffs;
@@ -155,14 +156,12 @@ public class Interpolation {
 	/**
 	 * Prints out a string representation of newton's form.
 	 * @param coeffs - Leading coefficients to be used
-	 * @param indepedent - given x values
+	 * @param independent - given x values
 	 * @param size - actual size of the array
 	 */
-	public static void equationPrint(double[] coeffs, double[] indepedent, int size) {
+	public static void equationPrint(double[] coeffs, double[] independent, int size) {
 		String temp = "";
 		double num = 0, num2 = 0;
-		double hold;
-		String[] eq = new String[size];
 		for (int i = 0; i < coeffs.length; i++) {
 			System.out.print(Math.rint((coeffs[i] * 1000))/1000);
 
@@ -175,12 +174,12 @@ public class Interpolation {
 			if (i > 0) {
 				temp += "(x";
 
-				num = (indepedent[i-1]);
-				num2 = (Math.abs(indepedent[i - 1]));
+				num = (independent[i-1]);
+				num2 = (Math.abs(independent[i - 1]));
 
-				if (indepedent[i - 1] == 0)
+				if (independent[i - 1] == 0)
 					temp += ")"; 
-				else if (indepedent[i - 1] > 0) 
+				else if (independent[i - 1] > 0) 
 					temp += "-" + num + ")";
 				else
 					temp += "+" + num2 + ")";
@@ -202,12 +201,45 @@ public class Interpolation {
 	 * @param size - actual size of the array
 	 */
 	public static void lagrange(double[] independent, double[] dependent, int size){
-		String[] eq = new String[size];
+		StringBuilder[] eq = new StringBuilder[size];
 		double subtotal;
 
 		for (int i = 0; i < size; ++i){	//for ea sub equation
 			subtotal = 1;
-			eq[i] = "";
+			eq[i] = new StringBuilder();
+			for (int j = 0; j < size; ++j){
+				if (j != i){
+					if (independent[j] != 0){
+						eq[i].append("(x-" +  independent[j] + ")");
+					}
+					else{
+						eq[i].append("(x)");
+					}
+					subtotal *= (independent[i]-independent[j]);
+				}
+			}
+			subtotal = dependent[i]/subtotal;
+			subtotal = Math.rint((subtotal * 100))/100;
+			eq[i].insert(0, subtotal);
+			if (i < size-1){
+				eq[i].append(" + ");
+			}
+			System.out.print(eq[i]);
+		}
+		System.out.println("\n");
+	}
+	/**
+	 * Same formulation as {@link lagrange} but prints out numerical calculations rather than solving.
+	 * @param independent - input x
+	 * @param dependent - input y
+	 * @param size - actual size of array
+	 */
+	public static void lagrangeExpanded(double[] independent, double[] dependent, int size){
+		String[] eq = new String[size];
+
+		for (int i = 0; i < size; ++i){	//for ea sub equation
+			eq[i] = ""; 
+			eq[i] += dependent[i]; 	//store coeff
 			for (int j = 0; j < size; ++j){
 				if (j != i){
 					if (independent[j] != 0){
@@ -216,17 +248,34 @@ public class Interpolation {
 					else{
 						eq[i] += "(x)";
 					}
-					subtotal *= (independent[i]-independent[j]);
 				}
 			}
-			subtotal = dependent[i]/subtotal;
-			subtotal = Math.rint((subtotal * 100))/100;
-			eq[i] = subtotal + eq[i];
+			eq[i] += "/";
+			for (int k = 0; k < size; ++k){
+				if (k != i){
+					if (independent[k] != 0){
+						eq[i] += "(" + independent[i] +  "-" +  independent[k] + ")";
+					}
+					else{
+						eq[i] += "(" + independent[i] + ")";
+					}
+				}
+			}
 			if (i < size-1){
 				eq[i] += " + ";
 			}
 			System.out.print(eq[i]);
 		}
 		System.out.println();
+	}
+	public class Polynomial{
+		double[] coeffs;
+		double[] independent;
+		int size;	
+		public Polynomial(double[] coeffs, double[] independent, int size){
+			this.coeffs = coeffs;
+			this.independent = independent;
+			this.size = size;
+		}
 	}
 }
