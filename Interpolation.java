@@ -5,6 +5,7 @@
  */
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
@@ -19,9 +20,9 @@ public class Interpolation {
 		double[] independent = new double[50];
 		double temp = 0.0;
 		double[] dependent = new double[50];
-//		System.out.println("Enter filename ex(ex, test.txt): ");
+		//		System.out.println("Enter filename ex(ex, test.txt): ");
 		try {
-//			filename = kb.nextLine();
+			//			filename = kb.nextLine();
 			File file = new File("input.txt");
 			Scanner inputFile = new Scanner(file);   // opens file of user input
 
@@ -64,7 +65,7 @@ public class Interpolation {
 			coef = tablePrint(independent, dependent, size, fxsize);
 			equationPrint(coef, independent, size);
 			lagrange(independent, y, size);
-//			lagrangeExpanded(independent, y, size);
+			//			lagrangeExpanded(independent, y, size);
 
 			kb.close();
 			inputFile.close();
@@ -160,7 +161,8 @@ public class Interpolation {
 	 * @param size - actual size of the array
 	 */
 	public static void equationPrint(double[] coeffs, double[] independent, int size) {
-		String temp = "";
+		System.out.println("Newton Equation");
+		StringBuilder sb = new StringBuilder();
 		double num = 0, num2 = 0;
 		for (int i = 0; i < coeffs.length; i++) {
 			System.out.print(Math.rint((coeffs[i] * 1000))/1000);
@@ -172,18 +174,18 @@ public class Interpolation {
 					System.out.print(" - ");
 			}
 			if (i > 0) {
-				temp += "(x";
+				sb.append("(x");
 
 				num = (independent[i-1]);
 				num2 = (Math.abs(independent[i - 1]));
 
 				if (independent[i - 1] == 0)
-					temp += ")"; 
+					sb.append(")"); 
 				else if (independent[i - 1] > 0) 
-					temp += "-" + num + ")";
+					sb.append("-" + num + ")");
 				else
-					temp += "+" + num2 + ")";
-				System.out.print(temp);
+					sb.append("+" + num2 + ")");
+				System.out.print(sb);
 				if ((i+1) < size) {
 					if (coeffs[i+1] > 0) 
 						System.out.print(" + ");
@@ -201,10 +203,14 @@ public class Interpolation {
 	 * @param size - actual size of the array
 	 */
 	public static void lagrange(double[] independent, double[] dependent, int size){
+		System.out.println("Lagrange");
 		StringBuilder[] eq = new StringBuilder[size];
 		double subtotal;
+		ArrayList<Double> polynomials = new ArrayList<Double>();
+		ArrayList<Double> segmentPoly = new ArrayList<Double>();
+		ArrayList<Double> condensed = new ArrayList<Double>();
 
-		for (int i = 0; i < size; ++i){	//for ea sub equation
+		for (int i = 0; i < 2; ++i){	//for ea sub equation SIZE
 			subtotal = 1;
 			eq[i] = new StringBuilder();
 			for (int j = 0; j < size; ++j){
@@ -215,18 +221,63 @@ public class Interpolation {
 					else{
 						eq[i].append("(x)");
 					}
+					polynomials.add(-independent[j]);
 					subtotal *= (independent[i]-independent[j]);
 				}
 			}
 			subtotal = dependent[i]/subtotal;
-			subtotal = Math.rint((subtotal * 100))/100;
+			subtotal = Math.rint((subtotal * 1000))/1000;
+			polynomials.add(0, subtotal);
 			eq[i].insert(0, subtotal);
-			if (i < size-1){
+			if (i < size-1 ){
 				eq[i].append(" + ");
 			}
-			System.out.print(eq[i]);
+			System.out.println(eq[i]);//print
+			segmentPoly = simplify(polynomials);
+			/*			for (Double temp: segmentPoly)
+				System.out.println("segmentPoly: " + temp);*/
+			for (int l = 0; l < segmentPoly.size(); ++l){
+				if (condensed.size() < segmentPoly.size()){
+					System.out.println("size++");
+					condensed.add(0.0);
+				}
+				condensed.set(l, condensed.get(l) + segmentPoly.get(l));
+				/*				System.out.println("segment: " + segmentPoly.get(l));
+				System.out.println("condensed: " + condensed.get(l));*/
+			}
+			polynomials.clear();
 		}
+		for (Double temp: condensed)
+			System.out.println("condensed: " + temp);
 		System.out.println("\n");
+	}
+	public static ArrayList<Double> simplify(ArrayList<Double> polynomials){
+		/*		for (int l = 0; l < polynomials.size(); ++l){
+			System.out.println("param: " + polynomials.get(l));
+		}*/
+		ArrayList<Double> simplified = new ArrayList<Double>();
+		simplified.add(polynomials.get(1));
+		simplified.add(1.0);
+		//	double temp2 = 0;
+
+		for (int i = 2; i < polynomials.size(); ++i){
+			simplified.add(0, 0.0);	//shift
+			/*			for (Double temp: simplified){
+				System.out.println(i + " curr list: " + temp);
+			}*/
+			for (int j = 1; j < simplified.size(); ++j){
+				//				System.out.println((j-1) + "Multiplying values: " + polynomials.get(i) + " * " +  simplified.get(j) + " + " + simplified.get(j-1));
+				//temp2 = (polynomials.get(i) * simplified.get(j)) + simplified.get(j-1);
+				simplified.set(j-1, (polynomials.get(i) * simplified.get(j)) + simplified.get(j-1));
+			}
+			/*			for (Double temp: simplified){
+				System.out.println("after mod: " + temp);
+			}*/
+		}
+		for (int k = 0; k < simplified.size(); ++k){
+			simplified.set(k, polynomials.get(0)*simplified.get(k));
+		}
+		return simplified;
 	}
 	/**
 	 * Same formulation as {@link lagrange} but prints out numerical calculations rather than solving.
@@ -268,14 +319,27 @@ public class Interpolation {
 		}
 		System.out.println();
 	}
+
+	//takes in an arraylist<double>
 	public class Polynomial{
-		double[] coeffs;
-		double[] independent;
-		int size;	
-		public Polynomial(double[] coeffs, double[] independent, int size){
-			this.coeffs = coeffs;
-			this.independent = independent;
-			this.size = size;
+		ArrayList<Double> polynomials;
+		public Polynomial(ArrayList<Double> polynomials){
+			this.polynomials = polynomials;
+		}
+		//where [0] is coeff, [1-(size-1)] are polynomials all of first power and x-1
+		public void evaluate(){
+			ArrayList<Double> simplified = new ArrayList<Double>();
+			simplified.add(1.0);
+			simplified.add(polynomials.get(1));
+			for (int i = 2; i < polynomials.size(); ++i){
+				simplified.add(0, 0.0);	//shift
+				for (int j = 0; j < simplified.size(); ++j){
+					simplified.set(j, simplified.get(1) * polynomials.get(i)); 
+				}
+			}
+			for (int k = 0; k < simplified.size(); ++k){
+				System.out.println(simplified.get(k));
+			}
 		}
 	}
 }
